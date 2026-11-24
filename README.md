@@ -4,6 +4,16 @@ A calm, minimal home launcher for Android TV and Fire TV devices. Lenitive Launc
 
 `Lenitive` means soothing or gently relieving — the name reflects the idea of a home screen that gets out of the way.
 
+> [!WARNING]
+> **Root access (Magisk) is required for the remote-button features.** The APK installs and runs as a normal launcher without root, but these features depend on a separate root watcher and/or direct `su` access:
+>
+> - Streaming app button bindings (Prime Video / Netflix / Disney+ / Hulu buttons)
+> - Physical HOME press force-stopping background user apps (the launcher itself calls `su`)
+> - MENU/RECENTS → TV quick-menu bridge, including D-pad/OK/Back forwarding
+> - Screensaver button
+>
+> The root watcher is a Magisk module that reads the raw remote evdev node; it is not part of this repository. Without Magisk root on the Fire Stick, Lenitive still works as a plain home screen — wallpaper/screensaver slideshows, hidden apps, icon changes, and app reordering all function — but the button-based utilities will not fire. The optional Force Stop companion app also requires Magisk root.
+
 ## Features
 
 - Single horizontal app row with wraparound navigation and clean focus treatment.
