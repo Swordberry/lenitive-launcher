@@ -21,7 +21,7 @@ The package ID stays `com.local.homelauncher`, so this is an in-place update fro
 
 ## Streaming button bindings
 
-Open **Launcher settings → Streaming button bindings** to assign an app to each of the four physical app buttons on the Fire TV remote. Each button can be set to any launchable app or cleared back to default Fire OS behavior. There is also a **Clear all bindings** shortcut.
+Open **Launcher settings → Streaming button bindings** to assign an app to each of the four physical app buttons on the Fire TV remote. The menu labels them as **1 Prime Video**, **2 Netflix**, **3 Disney+**, and **4 Hulu**, matching the buttons printed on the remote. Each button can be set to any launchable app or cleared back to default Fire OS behavior. There is also a **Clear all bindings** shortcut.
 
 Bindings are saved to:
 

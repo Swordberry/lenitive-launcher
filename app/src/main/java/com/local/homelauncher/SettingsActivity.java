@@ -45,10 +45,10 @@ public class SettingsActivity extends Activity {
             "button_1", "button_2", "button_3", "button_4"
     };
     private static final String[] STREAM_BUTTON_LABELS = {
-            "App button 1 (APP_1 / 02e8)",
-            "Prime Video button (APP_2 / 02e9)",
-            "Disney+ button (APP_3 / 02ea)",
-            "App button 4 (APP_4 / 02eb)"
+            "1 Prime Video",
+            "2 Netflix",
+            "3 Disney+",
+            "4 Hulu"
     };
     private LinearLayout panel;
     private String pendingCat = null;
