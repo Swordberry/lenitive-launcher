@@ -1445,6 +1445,16 @@ public class MainActivity extends Activity {
         line.setLayoutParams(llp);
         line.setBackgroundColor(587202559);
         linearLayout.addView(line);
+
+        final View blank = new View(this);
+        blank.setFocusable(true);
+        blank.setClickable(true);
+        blank.setOnClickListener(v -> { });
+        LinearLayout.LayoutParams blankLp = new LinearLayout.LayoutParams(
+                -1, (int) (getResources().getDisplayMetrics().density * 10));
+        blank.setLayoutParams(blankLp);
+        linearLayout.addView(blank);
+
         final boolean isFav = favorites().contains(key);
         addMenuOption(linearLayout, R.drawable.ic_piv_open, "Open", new Runnable() { // from class: com.local.homelauncher.MainActivity$$ExternalSyntheticLambda8
             @Override // java.lang.Runnable
@@ -1504,6 +1514,7 @@ public class MainActivity extends Activity {
             dialog.getWindow().setAttributes(wlp);
         }
         dialog.show();
+        blank.post(() -> blank.requestFocus());
     }
 
     /* renamed from: lambda$showAppMenu$12$com-local-homelauncher-MainActivity */

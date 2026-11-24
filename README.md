@@ -13,9 +13,32 @@ A calm, minimal home launcher for Android TV and Fire TV devices. Lenitive Launc
 - Hidden apps, icon changes, app reordering, and a small settings surface.
 - Physical HOME press can optionally force-stop running user-installed apps via a local flag file.
 - Optional external-TV quick-menu bridge using D-pad/OK/Back forwarding.
+- All four streaming app buttons can be bound to any installed app from launcher settings.
+- The long-press app menu starts on a blank no-op row, so opening it never accidentally selects “Open”.
 - No analytics, ads, accounts, or telemetry.
 
 The package ID stays `com.local.homelauncher`, so this is an in-place update from the earlier My Launcher builds.
+
+## Streaming button bindings
+
+Open **Launcher settings → Streaming button bindings** to assign an app to each of the four physical app buttons on the Fire TV remote. Each button can be set to any launchable app or cleared back to default Fire OS behavior. There is also a **Clear all bindings** shortcut.
+
+Bindings are saved to:
+
+```text
+/data/data/com.local.homelauncher/files/stream_buttons.conf
+```
+
+in this format:
+
+```text
+button_1=<package>/<activity>
+button_2=<package>/<activity>
+button_3=<package>/<activity>
+button_4=<package>/<activity>
+```
+
+A root remote watcher reads this file and launches the bound component. The watcher is maintained separately from this repository. This replaced the older hardcoded Prime Video and Disney+ button mappings.
 
 ## Optional TV bridge configuration
 

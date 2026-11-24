@@ -1,8 +1,11 @@
 package com.local.homelauncher;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
@@ -16,6 +19,19 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 /* loaded from: classes3.dex */
 public class SettingsActivity extends Activity {
     private static final int REQ_CAT_FOLDER = 1007;
@@ -24,10 +40,30 @@ public class SettingsActivity extends Activity {
     private static final int REQ_SLIDESHOW_FOLDER = 1004;
     private static final int REQ_VIDEO_WALLPAPER = 1003;
     private static final int REQ_WALLPAPER = 1001;
+    private static final String STREAM_BUTTON_FILE = "stream_buttons.conf";
+    private static final String[] STREAM_BUTTON_KEYS = {
+            "button_1", "button_2", "button_3", "button_4"
+    };
+    private static final String[] STREAM_BUTTON_LABELS = {
+            "App button 1 (APP_1 / 02e8)",
+            "Prime Video button (APP_2 / 02e9)",
+            "Disney+ button (APP_3 / 02ea)",
+            "App button 4 (APP_4 / 02eb)"
+    };
     private LinearLayout panel;
     private String pendingCat = null;
     private int pendingFolderReq = 0;
     private java.io.File browserDir = null;
+
+    private static class AppChoice {
+        final String label;
+        final String component;
+
+        AppChoice(String label, String component) {
+            this.label = label;
+            this.component = component;
+        }
+    }
 
     @Override // android.app.Activity
     protected void onCreate(Bundle savedInstanceState) {
@@ -117,6 +153,12 @@ public class SettingsActivity extends Activity {
             @Override // java.lang.Runnable
             public final void run() {
                 SettingsActivity.this.m97lambda$buildMainMenu$16$comlocalhomelauncherSettingsActivity();
+            }
+        });
+        addOption(this.panel, R.drawable.ic_piv_settings, "Streaming button bindings", new Runnable() {
+            @Override
+            public void run() {
+                SettingsActivity.this.buildStreamButtonMenu();
             }
         });
         addOption(this.panel, 0, "Cancel", new Runnable() { // from class: com.local.homelauncher.SettingsActivity$$ExternalSyntheticLambda13
@@ -377,6 +419,200 @@ public class SettingsActivity extends Activity {
         prefs().edit().remove("cat_wallpaper_type_" + cat).remove("cat_wallpaper_uri_" + cat).remove("cat_wallpaper_folder_" + cat).apply();
         Toast.makeText(this, "Cleared " + cat + " wallpaper", 0).show();
         m88xc28c9c4c(cat);
+    }
+
+    public void buildStreamButtonMenu() {
+        syncBindingsFromFile();
+
+        FrameLayout root = new FrameLayout(this);
+        root.setBackgroundColor(0x66000000);
+        root.setOnClickListener(v -> buildMainMenu());
+
+        LinearLayout p = new LinearLayout(this);
+        p.setOrientation(LinearLayout.VERTICAL);
+        p.setPadding(36, 28, 36, 28);
+        p.setClickable(true);
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(0xF21A1A1A);
+        bg.setCornerRadius(24f);
+        bg.setStroke(2, 0x33FFFFFF);
+        p.setBackground(bg);
+
+        addTitle(p, "Streaming button bindings");
+        for (int i = 0; i < STREAM_BUTTON_KEYS.length; i++) {
+            final int index = i;
+            String binding = prefs().getString(STREAM_BUTTON_KEYS[i], "");
+            addOption(p, R.drawable.ic_piv_settings,
+                    STREAM_BUTTON_LABELS[i] + ": " + bindingLabel(binding),
+                    () -> buildStreamButtonPicker(index));
+        }
+        addOption(p, R.drawable.ic_piv_delete, "Clear all bindings", () -> {
+            SharedPreferences.Editor editor = prefs().edit();
+            for (String key : STREAM_BUTTON_KEYS) {
+                editor.putString(key, "");
+            }
+            editor.apply();
+            writeBindings();
+            Toast.makeText(SettingsActivity.this, "Streaming button bindings cleared", Toast.LENGTH_SHORT).show();
+            buildStreamButtonMenu();
+        });
+        addOption(p, 0, "Back", this::buildMainMenu);
+
+        ScrollView sv = new ScrollView(this);
+        sv.setVerticalScrollBarEnabled(false);
+        sv.addView(p);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                (int) (getResources().getDisplayMetrics().widthPixels * 0.32d),
+                (int) (getResources().getDisplayMetrics().heightPixels * 0.82d));
+        lp.gravity = android.view.Gravity.CENTER;
+        root.addView(sv, lp);
+        sv.setClickable(true);
+        setContentView(root);
+        focusFirst(p);
+    }
+
+    public void buildStreamButtonPicker(final int index) {
+        syncBindingsFromFile();
+
+        FrameLayout root = new FrameLayout(this);
+        root.setBackgroundColor(0x66000000);
+        root.setOnClickListener(v -> buildStreamButtonMenu());
+
+        LinearLayout p = new LinearLayout(this);
+        p.setOrientation(LinearLayout.VERTICAL);
+        p.setPadding(36, 28, 36, 28);
+        p.setClickable(true);
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(0xF21A1A1A);
+        bg.setCornerRadius(24f);
+        bg.setStroke(2, 0x33FFFFFF);
+        p.setBackground(bg);
+
+        addTitle(p, "Bind " + STREAM_BUTTON_LABELS[index]);
+        addOption(p, R.drawable.ic_piv_delete, "Default / no binding", () -> {
+            prefs().edit().putString(STREAM_BUTTON_KEYS[index], "").apply();
+            writeBindings();
+            Toast.makeText(SettingsActivity.this, STREAM_BUTTON_LABELS[index] + " reset to default", Toast.LENGTH_SHORT).show();
+            buildStreamButtonMenu();
+        });
+
+        List<AppChoice> apps = collectLaunchableApps();
+        if (apps.isEmpty()) {
+            addOption(p, 0, "No launchable apps found", () -> { });
+        } else {
+            for (AppChoice app : apps) {
+                final String component = app.component;
+                addOption(p, 0, app.label, () -> {
+                    prefs().edit().putString(STREAM_BUTTON_KEYS[index], component).apply();
+                    writeBindings();
+                    Toast.makeText(SettingsActivity.this,
+                            STREAM_BUTTON_LABELS[index] + " -> " + app.label,
+                            Toast.LENGTH_SHORT).show();
+                    buildStreamButtonMenu();
+                });
+            }
+        }
+        addOption(p, 0, "Back", this::buildStreamButtonMenu);
+
+        ScrollView sv = new ScrollView(this);
+        sv.setVerticalScrollBarEnabled(false);
+        sv.addView(p);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                (int) (getResources().getDisplayMetrics().widthPixels * 0.32d),
+                (int) (getResources().getDisplayMetrics().heightPixels * 0.82d));
+        lp.gravity = android.view.Gravity.CENTER;
+        root.addView(sv, lp);
+        sv.setClickable(true);
+        setContentView(root);
+        focusFirst(p);
+    }
+
+    private List<AppChoice> collectLaunchableApps() {
+        PackageManager pm = getPackageManager();
+        Map<String, AppChoice> apps = new LinkedHashMap<>();
+
+        Intent leanback = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER);
+        for (ResolveInfo info : pm.queryIntentActivities(leanback, 0)) {
+            addAppChoice(pm, apps, info);
+        }
+        Intent standard = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER);
+        for (ResolveInfo info : pm.queryIntentActivities(standard, 0)) {
+            addAppChoice(pm, apps, info);
+        }
+
+        List<AppChoice> result = new ArrayList<>(apps.values());
+        Collections.sort(result, (a, b) -> a.label.compareToIgnoreCase(b.label));
+        return result;
+    }
+
+    private void addAppChoice(PackageManager pm, Map<String, AppChoice> apps, ResolveInfo info) {
+        if (info == null || info.activityInfo == null) {
+            return;
+        }
+        String component = new ComponentName(info.activityInfo.packageName, info.activityInfo.name).flattenToString();
+        if (apps.containsKey(component)) {
+            return;
+        }
+        CharSequence label = info.loadLabel(pm);
+        String name = label != null ? label.toString() : info.activityInfo.packageName;
+        apps.put(component, new AppChoice(name, component));
+    }
+
+    private String bindingLabel(String component) {
+        if (component == null || component.isEmpty()) {
+            return "Default";
+        }
+        String pkg = component.split("/", 2)[0];
+        try {
+            PackageManager pm = getPackageManager();
+            return pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString();
+        } catch (Exception ignored) {
+            return pkg;
+        }
+    }
+
+    private void syncBindingsFromFile() {
+        File file = new File(getFilesDir(), STREAM_BUTTON_FILE);
+        if (!file.exists()) {
+            return;
+        }
+        SharedPreferences.Editor editor = prefs().edit();
+        boolean changed = false;
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                int separator = line.indexOf('=');
+                if (separator <= 0) {
+                    continue;
+                }
+                String key = line.substring(0, separator).trim();
+                String value = line.substring(separator + 1).trim();
+                for (String knownKey : STREAM_BUTTON_KEYS) {
+                    if (knownKey.equals(key) && !prefs().contains(knownKey)) {
+                        editor.putString(knownKey, value);
+                        changed = true;
+                        break;
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        if (changed) {
+            editor.apply();
+        }
+    }
+
+    private void writeBindings() {
+        StringBuilder data = new StringBuilder();
+        for (String key : STREAM_BUTTON_KEYS) {
+            data.append(key).append('=').append(prefs().getString(key, "")).append('\n');
+        }
+        try (FileOutputStream out = new FileOutputStream(new File(getFilesDir(), STREAM_BUTTON_FILE), false)) {
+            out.write(data.toString().getBytes(StandardCharsets.UTF_8));
+        } catch (Exception ignored) {
+            Toast.makeText(this, "Could not save streaming button bindings", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void addTitle(LinearLayout panel, String text) {
