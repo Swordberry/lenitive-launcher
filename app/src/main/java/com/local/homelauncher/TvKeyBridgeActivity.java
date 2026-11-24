@@ -37,13 +37,17 @@ public class TvKeyBridgeActivity extends Activity {
     private static final String CONFIG_FILE = "tv_bridge.conf";
     private static final long EXIT_AFTER_MS = 180000L;
     private static final String EXIT_FLAG = "/data/local/tmp/vizio_tv_bridge_exit";
+    private static final String BACK_FLAG = "/data/local/tmp/vizio_tv_bridge_back";
+    private static final String BRIDGE_ACTIVE_KEY = "tv_bridge_active";
 
     private volatile String tvBase;
     private volatile String tvAuth;
+    private volatile boolean closing = false;
 
     private final Handler handler = new Handler();
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final Runnable exitRunnable = () -> finish();
+    private final Runnable openMenu = () -> sendKey(4, 8);
     private final Runnable pollExit = new Runnable() {
         @Override
         public void run() {
@@ -51,8 +55,13 @@ public class TvKeyBridgeActivity extends Activity {
                 File flag = new File(EXIT_FLAG);
                 if (flag.exists() && flag.length() > 0) {
                     new FileOutputStream(flag).close();
-                    sendKeyAndFinish(4, 8);
+                    closeMenuAndFinish();
                     return;
+                }
+                File backFlag = new File(BACK_FLAG);
+                if (backFlag.exists() && backFlag.length() > 0) {
+                    new FileOutputStream(backFlag).close();
+                    closeMenuAndFinish();
                 }
             } catch (Exception ignored) {
             }
@@ -105,11 +114,16 @@ public class TvKeyBridgeActivity extends Activity {
         tvBase = config[0];
         tvAuth = config[1];
 
+        getSharedPreferences("launcher", 0).edit().putBoolean(BRIDGE_ACTIVE_KEY, true).apply();
+        try {
+            new FileOutputStream("/data/local/tmp/vizio_bridge_opening").close();
+        } catch (Exception ignored) {
+        }
         scheduleExit();
         handler.post(pollExit);
 
         // Open the Vizio quick menu only; navigation is left to the user.
-        handler.postDelayed(() -> sendKey(4, 8), 150);
+        handler.postDelayed(openMenu, 150);
     }
 
     @Override
@@ -141,10 +155,8 @@ public class TvKeyBridgeActivity extends Activity {
                         sendKey(3, 2);
                         break;
                     case KeyEvent.KEYCODE_BACK:
-                        sendKeyAndFinish(4, 8);
-                        break;
                     case KeyEvent.KEYCODE_MENU:
-                        sendKeyAndFinish(4, 8);
+                        closeMenuAndFinish();
                         break;
                 }
                 scheduleExit();
@@ -171,15 +183,20 @@ public class TvKeyBridgeActivity extends Activity {
         handler.postDelayed(exitRunnable, EXIT_AFTER_MS);
     }
 
-    private void sendKey(int codeSet, int keyCode) {
-        executor.execute(() -> postKey(codeSet, keyCode));
-    }
-
-    private void sendKeyAndFinish(int codeSet, int keyCode) {
+    private void closeMenuAndFinish() {
+        if (closing) {
+            return;
+        }
+        closing = true;
+        handler.removeCallbacks(openMenu);
         executor.execute(() -> {
-            postKey(codeSet, keyCode);
+            postKey(4, 8);
             runOnUiThread(this::finish);
         });
+    }
+
+    private void sendKey(int codeSet, int keyCode) {
+        executor.execute(() -> postKey(codeSet, keyCode));
     }
 
     private void postKey(int codeSet, int keyCode) {
@@ -244,13 +261,8 @@ public class TvKeyBridgeActivity extends Activity {
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
-        finish();
-    }
-
-    @Override
     protected void onDestroy() {
+        getSharedPreferences("launcher", 0).edit().putBoolean(BRIDGE_ACTIVE_KEY, false).apply();
         handler.removeCallbacks(pollExit);
         handler.removeCallbacksAndMessages(null);
         executor.shutdownNow();

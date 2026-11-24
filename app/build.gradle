@@ -6,8 +6,8 @@ android {
         applicationId "com.local.homelauncher"
         minSdk 21
         targetSdk 34
-        versionCode 79
-        versionName "2.4"
+        versionCode 84
+        versionName "2.9"
     }
     buildTypes {
         debug { minifyEnabled false }

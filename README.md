@@ -22,7 +22,7 @@ A calm, minimal home launcher for Android TV and Fire TV devices. Lenitive Launc
 - Wallpaper and screensaver share the current slide timing, including remaining time on wake.
 - Hidden apps, icon changes, app reordering, and a small settings surface.
 - Physical HOME press can optionally force-stop running user-installed apps via a local flag file.
-- Optional external-TV quick-menu bridge using D-pad/OK/Back forwarding.
+- Optional external-TV quick-menu bridge with D-pad/OK navigation; Back closes the TV menu and returns to the launcher without recreating it.
 - All four streaming app buttons can be bound to any installed app from launcher settings.
 - The long-press app menu starts on a blank no-op row, so opening it never accidentally selects “Open”.
 - No analytics, ads, accounts, or telemetry.
@@ -75,6 +75,8 @@ auth=<auth-token>
 ```
 
 The file should be owned by the launcher UID and set to mode `0600`. If the file is missing, the bridge activity simply does nothing; the rest of the launcher is unaffected.
+
+Back and the quick-menu button both close the TV menu by sending the TV's MENU toggle. The bridge runs in its own Android task and no longer calls `finish()` from `onStop()`, so returning to the launcher does not restart `MainActivity` or pause the wallpaper. Lenitive never writes or clears the TV sleep timer; a value set in the TV menu stays in place after the menu is closed.
 
 A separate root remote watcher is used on the Fire Stick to map physical remote buttons to the bridge and screensaver. That watcher is not part of this repository.
 

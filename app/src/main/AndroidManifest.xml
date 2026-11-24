@@ -27,7 +27,7 @@
             </intent-filter>
         </activity>
         <activity android:exported="false" android:name="com.local.homelauncher.SettingsActivity" android:theme="@android:style/Theme.Translucent.NoTitleBar"/>
-        <activity android:exported="true" android:name="com.local.homelauncher.TvKeyBridgeActivity" android:theme="@android:style/Theme.Translucent.NoTitleBar" android:launchMode="singleTask" android:excludeFromRecents="true" android:noHistory="true"/>
+        <activity android:exported="true" android:name="com.local.homelauncher.TvKeyBridgeActivity" android:theme="@android:style/Theme.Translucent.NoTitleBar" android:launchMode="singleTop" android:excludeFromRecents="true" android:taskAffinity="com.local.homelauncher.tv_bridge"/>
         <activity android:exported="true" android:name="com.local.homelauncher.ScreensaverStartActivity" android:theme="@android:style/Theme.Translucent.NoTitleBar" android:excludeFromRecents="true" android:noHistory="true"/>
         <service android:exported="true" android:label="@string/screensaver_name" android:name="com.local.homelauncher.LauncherDreamService" android:permission="android.permission.BIND_DREAM_SERVICE">
             <intent-filter>

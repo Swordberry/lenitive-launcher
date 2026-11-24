@@ -319,16 +319,37 @@ public class MainActivity extends Activity {
         if (!sync.getBoolean("screensaver_active", false) && !sync.getBoolean("screensaver_requested", false)) {
             syncEdit.remove("screensaver_was_active");
         }
-        if (!this.slideshowMedia.isEmpty()) {
-            syncEdit.putLong("slideshow_paused_at", System.currentTimeMillis());
-        }
-        syncEdit.apply();
-        stopSlideshow();
-        try {
-            if (this.videoWallpaper.isPlaying()) {
-                this.videoWallpaper.pause();
+        boolean bridgeActive = sync.getBoolean("tv_bridge_active", false) || bridgeOpening();
+        if (!bridgeActive) {
+            if (!this.slideshowMedia.isEmpty()) {
+                syncEdit.putLong("slideshow_paused_at", System.currentTimeMillis());
             }
+            syncEdit.apply();
+            stopSlideshow();
+            try {
+                if (this.videoWallpaper.isPlaying()) {
+                    this.videoWallpaper.pause();
+                }
+            } catch (Exception e) {
+            }
+        } else {
+            syncEdit.apply();
+        }
+    }
+
+    private boolean bridgeOpening() {
+        try {
+            File f = new File("/data/local/tmp/vizio_bridge_opening");
+            if (!f.exists()) return false;
+            BufferedReader reader = new BufferedReader(new FileReader(f));
+            String line = reader.readLine();
+            reader.close();
+            if (line == null) return false;
+            long opened = Long.parseLong(line.trim());
+            long now = System.currentTimeMillis() / 1000;
+            return now - opened >= 0 && now - opened <= 5;
         } catch (Exception e) {
+            return false;
         }
     }
 
