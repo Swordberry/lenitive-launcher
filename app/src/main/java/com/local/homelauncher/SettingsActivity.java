@@ -41,8 +41,12 @@ public class SettingsActivity extends Activity {
     private static final int REQ_VIDEO_WALLPAPER = 1003;
     private static final int REQ_WALLPAPER = 1001;
     private static final String STREAM_BUTTON_FILE = "stream_buttons.conf";
+    // Order matches the displayed button names below, not the raw scan-code order.
+    // Physical mapping verified with the remote:
+    //   button_1 (02e8) = Netflix, button_2 (02e9) = Prime Video,
+    //   button_3 (02ea) = Disney+, button_4 (02eb) = Hulu.
     private static final String[] STREAM_BUTTON_KEYS = {
-            "button_1", "button_2", "button_3", "button_4"
+            "button_2", "button_1", "button_3", "button_4"
     };
     private static final String[] STREAM_BUTTON_LABELS = {
             "1 Prime Video",

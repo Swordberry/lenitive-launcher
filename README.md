@@ -38,6 +38,15 @@ button_3=<package>/<activity>
 button_4=<package>/<activity>
 ```
 
+The config keys follow the raw scan codes, not the printed button order. Verified on the physical remote:
+
+```text
+button_1 (02e8) = Netflix
+button_2 (02e9) = Prime Video
+button_3 (02ea) = Disney+
+button_4 (02eb) = Hulu
+```
+
 A root remote watcher reads this file and launches the bound component. The watcher is maintained separately from this repository. This replaced the older hardcoded Prime Video and Disney+ button mappings.
 
 ## Optional TV bridge configuration
